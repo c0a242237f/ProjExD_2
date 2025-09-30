@@ -29,19 +29,29 @@ def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
 
 def get_kk_imgs() -> dict[tuple[int, int], pg.Surface]:
     kk_imgs = {}
-    kk_img_normal = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 1.0)  # 元画像_左向き
-    kk_img_flipped = pg.transform.flip(kk_img_normal, True, False)  # 反転画像_右向き
+    kk_img_normal = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 1.0)  # 元画像_左
+    kk_img_hanten = pg.transform.flip(kk_img_normal, True, False)  # 反転画像_右
     
     kk_imgs[(0, 0)] = kk_img_normal  # 通常
-    kk_imgs[(-5, -5)] = pg.transform.rotozoom(kk_img_normal, -45, 1.0) # 左上45度
-    kk_imgs[(0, -5)] = pg.transform.rotozoom(kk_img_flipped, 90, 1.0) # 上90度
-    kk_imgs[(+5, -5)] = pg.transform.rotozoom(kk_img_flipped, 45, 1.0) # 右上45度
-    kk_imgs[(+5, 0)] = kk_img_flipped # 右向き
-    kk_imgs[(+5, +5)] = pg.transform.rotozoom(kk_img_flipped, -45, 1.0) # 右下45度
-    kk_imgs[(0, +5)] = pg.transform.rotozoom(kk_img_flipped, -90, 1.0) # 下90度
-    kk_imgs[(-5, +5)] = pg.transform.rotozoom(kk_img_normal, +45, 1.0) # 左下45度
+    kk_imgs[(-5, -5)] = pg.transform.rotozoom(kk_img_normal, -45, 1.0) # 左上
+    kk_imgs[(0, -5)] = pg.transform.rotozoom(kk_img_hanten, 90, 1.0) # 上
+    kk_imgs[(+5, -5)] = pg.transform.rotozoom(kk_img_hanten, 45, 1.0) # 右上
+    kk_imgs[(+5, 0)] = kk_img_hanten # 右
+    kk_imgs[(+5, +5)] = pg.transform.rotozoom(kk_img_hanten, -45, 1.0) # 右下
+    kk_imgs[(0, +5)] = pg.transform.rotozoom(kk_img_hanten, -90, 1.0) # 下
+    kk_imgs[(-5, +5)] = pg.transform.rotozoom(kk_img_normal, +45, 1.0) # 左下
     
-    return kk_imgs 
+    return kk_imgs
+
+def init_bb_imgs() -> tuple[list[pg.Surface], list[int]]:
+    bb_imgs = []
+    for r in range(1, 11):
+        bb_img = pg.Surface((20*r, 20*r))
+        pg.draw.circle(bb_img, (255, 0, 0), (10*r, 10*r), 10*r)
+        bb_img.set_colorkey((0, 0, 0))
+        bb_imgs.append(bb_img)
+        bb_accs = [a for a in range(1, 11)]
+    return bb_imgs, bb_accs
 
 
 def main():
@@ -59,6 +69,7 @@ def main():
     bb_rct.centerx = random.randint(0, WIDTH)  # 爆弾横座標
     bb_rct.centery = random.randint(0, HEIGHT)  # 爆弾縦座標
     vx, vy = +5, +5  # 爆弾の速度
+    bb_imgs, bb_accs = init_bb_imgs()
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -97,6 +108,10 @@ def main():
         if not tate:  # 縦方向にはみ出ていたら
             vy *= -1  # 縦方向速度を反転
         screen.blit(bb_img, bb_rct)  # 爆弾描画
+        avx = vx*bb_accs[min(tmr//500, 9)]
+        avy = vy*bb_accs[min(tmr//500, 9)]
+        bb_img = bb_imgs[min(tmr//500, 9)]
+        bb_rct.move_ip(avx, avy)  # 爆弾移動
         pg.display.update()
         tmr += 1
         clock.tick(50)
