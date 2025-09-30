@@ -15,6 +15,11 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
 def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
+    """
+    引数：こうかとんRect or ばくだんRect
+    戻り値：判定結果タプル（横方向，縦方向）
+    画面内ならTrue/画面外ならFalse
+    """
     yoko, tate = True, True
     if rct.left < 0 or WIDTH < rct.right: #横方向にはみ出ていたら
         yoko = False
@@ -22,9 +27,26 @@ def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
         tate = False
     return yoko, tate
 
+def get_kk_imgs() -> dict[tuple[int, int], pg.Surface]:
+    kk_imgs = {}
+    kk_img_normal = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 1.0)  # 元画像_左向き
+    kk_img_flipped = pg.transform.flip(kk_img_normal, True, False)  # 反転画像_右向き
+    
+    kk_imgs[(0, 0)] = kk_img_normal  # 通常
+    kk_imgs[(-5, -5)] = pg.transform.rotozoom(kk_img_normal, -45, 1.0) # 左上45度
+    kk_imgs[(0, -5)] = pg.transform.rotozoom(kk_img_flipped, 90, 1.0) # 上90度
+    kk_imgs[(+5, -5)] = pg.transform.rotozoom(kk_img_flipped, 45, 1.0) # 右上45度
+    kk_imgs[(+5, 0)] = kk_img_flipped # 右向き
+    kk_imgs[(+5, +5)] = pg.transform.rotozoom(kk_img_flipped, -45, 1.0) # 右下45度
+    kk_imgs[(0, +5)] = pg.transform.rotozoom(kk_img_flipped, -90, 1.0) # 下90度
+    kk_imgs[(-5, +5)] = pg.transform.rotozoom(kk_img_normal, +45, 1.0) # 左下45度
+    
+    return kk_imgs 
+
 
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
+    kk_imgs = get_kk_imgs()
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("fig/pg_bg.jpg")    
     kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
@@ -66,6 +88,7 @@ def main():
         kk_rct.move_ip(sum_mv)
         if check_bound(kk_rct) != (True, True):
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
+        kk_img = kk_imgs.get(tuple(sum_mv), kk_img)
         screen.blit(kk_img, kk_rct)
         bb_rct.move_ip(vx, vy)  # 爆弾移動
         yoko, tate = check_bound(bb_rct)
